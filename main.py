@@ -1,30 +1,20 @@
 from domain.Estudiante import Estudiante
 from domain.Lote import Lote
+from infrastructure.excel_reader import agregar_estudiantes
+from datetime import datetime
 
-try:
-    estudiante = Estudiante(
-        "12345678",
-        "Juan Perez",
-        "Colegio Nacional",
-        "A",
-        "10",
-        "Bogota"
-    )
-
-except ValueError as e:
-    print(f"Error de valor: {e}")
-
-except TypeError as e:
-    print(f"Error de tipo: {e}")
-    
+fecha = datetime.now().strftime("%d/%m/%Y")
+prueba = "Prueba"
+grado = "10"
+jornada = "tarde"
+sesion = "1"
+estudiantes = agregar_estudiantes("inputs\\estudiantes.xlsx", "PU3")
 
 lote = Lote(
-    "2024-06-05",
-    "Matematicas",
-    "10",
-    "Mañana",
-    "1",
-    []
+    fecha,
+    prueba,
+    grado,
+    jornada,
+    sesion,
+    estudiantes
 )
-
-lote.agregar_estudiante(estudiante)

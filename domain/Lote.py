@@ -56,9 +56,3 @@ class Lote:
         self.jornada = jornada_normalizada 
         self.sesion = sesion.strip() 
         self.estudiantes = estudiantes
-        
-    def agregar_estudiante(self, estudiante):
-        if not isinstance(estudiante, Estudiante):
-            raise TypeError("El estudiante debe ser una instancia de Estudiante")
-        self.estudiantes.append(estudiante)
-        
