@@ -35,6 +35,7 @@ export async function verificarBackend() {
 export async function analizarExcel({
   excel,
   hoja,
+  grado,
 }) {
 
   const datos =
@@ -51,6 +52,11 @@ export async function analizarExcel({
     "hoja",
     hoja
   );
+
+  datos.append(
+  "grado",
+  grado
+);
 
 
   let respuesta;

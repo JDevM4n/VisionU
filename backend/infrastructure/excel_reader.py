@@ -1,4 +1,5 @@
 from openpyxl import load_workbook
+
 from domain.Estudiante import Estudiante
 
 
@@ -7,42 +8,46 @@ from domain.Estudiante import Estudiante
 # =========================================================
 
 def normalizar_nombre_hoja(nombre):
-    """
-    Normaliza el nombre de una hoja para poder comparar
-    ignorando espacios al inicio/final y mayúsculas/minúsculas.
-    """
 
-    return str(nombre).strip().casefold()
+    return (
+        str(nombre)
+        .strip()
+        .casefold()
+    )
 
 
 # =========================================================
-# ENCONTRAR HOJA DEL EXCEL
+# BUSCAR HOJA
 # =========================================================
 
 def encontrar_hoja(
     workbook,
     nombre_solicitado
 ):
-    """
-    Busca una hoja de Excel sin depender de coincidencia
-    exacta de mayúsculas/minúsculas o espacios sobrantes.
-    """
 
-    nombre_normalizado = normalizar_nombre_hoja(
-        nombre_solicitado
+    nombre_normalizado = (
+        normalizar_nombre_hoja(
+            nombre_solicitado
+        )
     )
 
     for nombre_real in workbook.sheetnames:
 
-        if normalizar_nombre_hoja(
-            nombre_real
-        ) == nombre_normalizado:
+        if (
+            normalizar_nombre_hoja(
+                nombre_real
+            )
+            ==
+            nombre_normalizado
+        ):
 
             return nombre_real
+
 
     disponibles = ", ".join(
         workbook.sheetnames
     )
+
 
     raise ValueError(
         f"No existe la hoja '{nombre_solicitado}'. "
@@ -54,11 +59,9 @@ def encontrar_hoja(
 # ENCONTRAR FILA DE ENCABEZADOS
 # =========================================================
 
-def encontrar_fila_encabezado(hoja):
-    """
-    Encuentra la fila donde se encuentran los encabezados
-    buscando una celda que contenga la palabra DOCUMENTO.
-    """
+def encontrar_fila_encabezado(
+    hoja
+):
 
     for numero_fila, filas in enumerate(
         hoja.iter_rows(),
@@ -67,25 +70,49 @@ def encontrar_fila_encabezado(hoja):
 
         for celda in filas:
 
-            if isinstance(
+            if not isinstance(
                 celda.value,
                 str
             ):
+                continue
 
-                texto = (
-                    celda.value
-                    .strip()
-                    .upper()
-                )
 
-                if "DOCUMENTO" in texto:
+            texto = (
+                celda.value
+                .strip()
+                .upper()
+            )
 
-                    return numero_fila
+
+            if "DOCUMENTO" in texto:
+
+                return numero_fila
+
 
     raise ValueError(
-        "No se pudo encontrar la fila de encabezados. "
-        "Debe existir una columna que contenga "
-        "la palabra 'DOCUMENTO'."
+        "No se pudo encontrar la fila "
+        "de encabezados del Excel."
+    )
+
+
+# =========================================================
+# NORMALIZAR ENCABEZADO
+# =========================================================
+
+def normalizar_encabezado(
+    valor
+):
+
+    if valor is None:
+        return ""
+
+
+    return (
+        str(valor)
+        .replace("\n", " ")
+        .replace("\r", " ")
+        .strip()
+        .upper()
     )
 
 
@@ -100,21 +127,19 @@ def obtener_columnas(
 
     columnas = {}
 
+
     for indice, celda in enumerate(
         hoja[fila_encabezado]
     ):
 
-        if not isinstance(
-            celda.value,
-            str
-        ):
+        texto = normalizar_encabezado(
+            celda.value
+        )
+
+
+        if texto == "":
             continue
 
-        texto = (
-            celda.value
-            .strip()
-            .upper()
-        )
 
         # ==========================================
         # DOCUMENTO
@@ -126,7 +151,9 @@ def obtener_columnas(
             "documento" not in columnas
         ):
 
-            columnas["documento"] = indice
+            columnas[
+                "documento"
+            ] = indice
 
 
         # ==========================================
@@ -134,34 +161,31 @@ def obtener_columnas(
         # ==========================================
 
         elif (
-            "NOMBRE COMPLETO" in texto
-            and
-            "nombre" not in columnas
-        ):
-
-            columnas["nombre"] = indice
-
-
-        elif (
+            "NOMBRE COMPLETO ESTUDIANTE"
+            in texto
+            or
+            "NOMBRE COMPLETO"
+            in texto
+            or
             texto == "NOMBRE"
-            and
-            "nombre" not in columnas
         ):
 
-            columnas["nombre"] = indice
+            if "nombre" not in columnas:
+
+                columnas[
+                    "nombre"
+                ] = indice
 
 
         # ==========================================
         # COLEGIO
         # ==========================================
 
-        elif (
-            "COLEGIO" in texto
-            and
-            "colegio" not in columnas
-        ):
+        elif texto == "COLEGIO":
 
-            columnas["colegio"] = indice
+            columnas[
+                "colegio"
+            ] = indice
 
 
         # ==========================================
@@ -170,25 +194,13 @@ def obtener_columnas(
 
         elif texto == "GRUPO":
 
-            columnas["grupo"] = indice
+            columnas[
+                "grupo"
+            ] = indice
 
 
         # ==========================================
-        # GRADO / CURSO
-        # ==========================================
-
-        elif texto == "CURSO":
-
-            columnas["grado"] = indice
-
-
-        elif texto == "GRADO":
-
-            columnas["grado"] = indice
-
-
-        # ==========================================
-        # CIUDAD
+        # MUNICIPIO / CIUDAD
         # ==========================================
 
         elif (
@@ -197,11 +209,14 @@ def obtener_columnas(
             texto == "CIUDAD"
         ):
 
-            columnas["ciudad"] = indice
+            columnas[
+                "ciudad"
+            ] = indice
 
 
     # ==========================================
-    # VERIFICAR CAMPOS OBLIGATORIOS
+    # IMPORTANTÍSIMO:
+    # GRADO YA NO ES OBLIGATORIO EN EL EXCEL
     # ==========================================
 
     campos_obligatorios = [
@@ -209,8 +224,7 @@ def obtener_columnas(
         "nombre",
         "colegio",
         "grupo",
-        "grado",
-        "ciudad"
+        "ciudad",
     ]
 
 
@@ -218,7 +232,8 @@ def obtener_columnas(
 
         campo
 
-        for campo in campos_obligatorios
+        for campo
+        in campos_obligatorios
 
         if campo not in columnas
 
@@ -245,50 +260,54 @@ def obtener_columnas(
 
 
 # =========================================================
-# LIMPIAR VALOR
+# LIMPIAR TEXTO
 # =========================================================
 
-def limpiar_texto(valor):
-    """
-    Convierte valores del Excel a texto de forma segura.
-    """
+def limpiar_texto(
+    valor
+):
 
     if valor is None:
         return ""
 
-    return str(valor).strip()
+
+    return (
+        str(valor)
+        .strip()
+    )
 
 
 # =========================================================
-# NORMALIZAR GRADO
+# LIMPIAR DOCUMENTO
 # =========================================================
 
-def normalizar_grado(valor):
-    """
-    Convierte valores como:
-    10
-    10°
-    Grado 10
-    Curso 10
+def limpiar_documento(
+    valor
+):
 
-    en:
-    10
-    """
-
-    texto = limpiar_texto(
-        valor
-    )
-
-    texto = texto.replace(
-        "°",
-        ""
-    )
-
-    if not texto:
-
+    if valor is None:
         return ""
 
-    return texto.split()[-1]
+
+    # Excel puede devolver algunos números
+    # como float: 1097784968.0
+
+    if isinstance(
+        valor,
+        float
+    ):
+
+        if valor.is_integer():
+
+            return str(
+                int(valor)
+            )
+
+
+    return (
+        str(valor)
+        .strip()
+    )
 
 
 # =========================================================
@@ -297,12 +316,9 @@ def normalizar_grado(valor):
 
 def agregar_estudiantes(
     ruta_archivo,
-    nombre_hoja
+    nombre_hoja,
+    grado
 ):
-
-    # ==============================================
-    # ABRIR EXCEL
-    # ==============================================
 
     workbook = load_workbook(
         ruta_archivo,
@@ -313,26 +329,29 @@ def agregar_estudiantes(
     try:
 
         # ==========================================
-        # BUSCAR NOMBRE REAL DE LA HOJA
+        # ENCONTRAR HOJA
         # ==========================================
 
-        nombre_real_hoja = encontrar_hoja(
+        nombre_real = encontrar_hoja(
             workbook,
             nombre_hoja
         )
 
 
         print(
-            f"Hoja solicitada: '{nombre_hoja}'"
+            "Hoja solicitada:",
+            repr(nombre_hoja)
         )
 
+
         print(
-            f"Hoja encontrada: '{nombre_real_hoja}'"
+            "Hoja encontrada:",
+            repr(nombre_real)
         )
 
 
         hoja = workbook[
-            nombre_real_hoja
+            nombre_real
         ]
 
 
@@ -347,6 +366,12 @@ def agregar_estudiantes(
         )
 
 
+        print(
+            "Fila de encabezados:",
+            fila_encabezado
+        )
+
+
         columnas = obtener_columnas(
             hoja,
             fila_encabezado
@@ -357,32 +382,34 @@ def agregar_estudiantes(
 
 
         # ==========================================
-        # LEER ESTUDIANTES
+        # RECORRER FILAS
         # ==========================================
 
         for fila in hoja.iter_rows(
-            min_row=fila_encabezado + 1
+            min_row=
+                fila_encabezado + 1
         ):
+
 
             documento = fila[
                 columnas["documento"]
             ].value
 
+
             nombre = fila[
                 columnas["nombre"]
             ].value
+
 
             colegio = fila[
                 columnas["colegio"]
             ].value
 
+
             grupo = fila[
                 columnas["grupo"]
             ].value
 
-            grado = fila[
-                columnas["grado"]
-            ].value
 
             ciudad = fila[
                 columnas["ciudad"]
@@ -390,7 +417,7 @@ def agregar_estudiantes(
 
 
             # ======================================
-            # FILAS VACÍAS
+            # OMITIR FILAS VACÍAS
             # ======================================
 
             if (
@@ -406,28 +433,35 @@ def agregar_estudiantes(
             # NORMALIZAR DATOS
             # ======================================
 
-            documento = limpiar_texto(
+            documento = limpiar_documento(
                 documento
             )
+
 
             nombre = limpiar_texto(
                 nombre
             )
 
+
             colegio = limpiar_texto(
                 colegio
             )
+
 
             grupo = limpiar_texto(
                 grupo
             )
 
-            grado = normalizar_grado(
-                grado
-            )
 
             ciudad = limpiar_texto(
                 ciudad
+            )
+
+
+            grado_estudiante = (
+                limpiar_texto(
+                    grado
+                )
             )
 
 
@@ -440,7 +474,7 @@ def agregar_estudiantes(
                 nombre,
                 colegio,
                 grupo,
-                grado,
+                grado_estudiante,
                 ciudad
             )
 

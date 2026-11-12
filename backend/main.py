@@ -182,12 +182,12 @@ def health():
 @app.post(
     "/excel/preview"
 )
+
+@app.post("/excel/preview")
 async def preview_excel(
-
     excel: UploadFile = File(...),
-
     hoja: str = Form(...),
-
+    grado: str = Form(...),
 ):
 
     identificador = (
@@ -256,11 +256,10 @@ async def preview_excel(
         )
 
 
-        estudiantes = (
-            agregar_estudiantes(
-                str(ruta_excel),
-                hoja,
-            )
+        estudiantes = agregar_estudiantes(
+            str(ruta_excel),
+            hoja,
+            grado,
         )
 
 

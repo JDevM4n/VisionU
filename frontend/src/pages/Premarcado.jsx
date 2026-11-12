@@ -230,6 +230,8 @@ function Premarcado() {
 
               hoja,
 
+              grado,
+
             });
 
 
@@ -279,6 +281,7 @@ function Premarcado() {
   }, [
     excel,
     hoja,
+    grado,
   ]);
 
 
