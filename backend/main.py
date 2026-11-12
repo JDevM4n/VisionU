@@ -382,6 +382,7 @@ def procesar_premark(
             agregar_estudiantes(
                 str(ruta_excel),
                 hoja,
+                grado,
             )
         )
 
